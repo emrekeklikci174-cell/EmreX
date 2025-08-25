@@ -1,0 +1,58 @@
+-- StarterGui içine LocalScript olarak ekle
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 200, 0, 50)
+button.Position = UDim2.new(0.5, -100, 0.5, -25)
+button.Text = "Uçmayı Aç"
+button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Parent = screenGui
+
+local flying = false
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+local particle
+
+local function setFlying(state)
+	flying = state
+	if flying then
+		button.Text = "Uçmayı Kapat"
+
+		-- Karakteri havada tutmak için BodyVelocity
+		local bodyVelocity = Instance.new("BodyVelocity")
+		bodyVelocity.Velocity = Vector3.new(0,0,0)
+		bodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
+		bodyVelocity.Name = "FlyForce"
+		bodyVelocity.Parent = rootPart
+
+		-- Alt alev efekti ekle
+		particle = Instance.new("ParticleEmitter")
+		particle.Texture = "rbxassetid://244221613" -- alev partikülü
+		particle.Rate = 50
+		particle.Lifetime = NumberRange.new(0.5)
+		particle.Speed = NumberRange.new(5)
+		particle.Parent = rootPart
+
+		game:GetService("RunService").RenderStepped:Connect(function()
+			if flying and bodyVelocity.Parent then
+				local moveDirection = humanoid.MoveDirection
+				bodyVelocity.Velocity = Vector3.new(moveDirection.X*50, 0, moveDirection.Z*50) + Vector3.new(0, 50, 0)
+			end
+		end)
+	else
+		button.Text = "Uçmayı Aç"
+		local flyForce = rootPart:FindFirstChild("FlyForce")
+		if flyForce then flyForce:Destroy() end
+		if particle then particle:Destroy() end
+	end
+end
+
+button.MouseButton1Click:Connect(function()
+	setFlying(not flying)
+end)
